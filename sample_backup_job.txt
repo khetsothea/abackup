@@ -1,0 +1,34 @@
+; *** files to be included/excluded
+include-file:C:\Users\user
+exclude-file:C:\Users\user\AppData\Roaming\cache*.dat
+
+include-file:D:\Projects
+exclude-file:D:\Projects\*\compiler_output
+
+include-file:D:\Work\AnotherImportantFile.xls
+
+; *** output destination, the created files will be D:\Backup\abackup_yyyyMMdd-HHmm.zip
+output:D:\Backup\abackup_
+
+; *** the list of files included in the last backup archive is stored here (optional, as it can be passed from the command line)
+catalog-file:D:\Tools\abackup\abcatalog.txt
+; *** we don't really need it in the archive, so we exclude it
+exclude-file:D:\Tools\abackup\abcatalog.txt
+
+; *** extensions that indicate already compressed files; they will be included in the zip without further compression (saves time)
+nozip:.rar
+nozip:.zip
+nozip:.7z
+nozip:.mp3
+nozip:.wma
+nozip:.avi
+nozip:.mpg
+nozip:.jpg
+nozip:.gif
+
+; *** Uncomment the next line to detect file changes using crc32 (slow). Otherwice only file size and time are used.
+;crc32
+
+; *** (optional) locations where the archives will be uploaded (will check and upload only missing archives)
+copy-to:\\server\share
+copy-to:ftp://backupuser:backuppass@ftp.example.com/
