@@ -8,9 +8,8 @@
 package abackup;
 
 import java.io.*;
+import java.util.*;
 import java.util.zip.*;
-import java.util.List;
-import java.util.Date;
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
 
@@ -51,7 +50,7 @@ public class ABackup {
         // get current files
         Catalog job = new Catalog(config);
         // find changed files
-        List<String> forUpdate = job.getUpdateList(lastBackup);
+        Collection<String> forUpdate = job.getUpdateList(lastBackup);
         // make the archive
         try {
             makeZip(forUpdate, config, job);
@@ -104,7 +103,7 @@ public class ABackup {
         return lastCat;
     }
 
-    private static File makeZip(List<String> forUpdate, Config config, Catalog catalog) throws IOException {
+    private static File makeZip(Collection<String> forUpdate, Config config, Catalog catalog) throws IOException {
         // build file name
         String fileName = config.getOutputFile();
         fileName += new SimpleDateFormat("yyyyMMdd-HHmm").format(new Date()) + ".zip";

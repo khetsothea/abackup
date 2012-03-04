@@ -61,7 +61,7 @@ public class AMerge {
         Catalog firstCat = ABackup.loadCatalog(new File(outputPath, backups[0]).getPath());
         Catalog lastCat = ABackup.loadCatalog(new File(outputPath, backups[backups.length - 1]).getPath());
 
-        List<String> forMerge = lastCat.getUpdateList(firstCat);
+        Iterable<String> forMerge = lastCat.getUpdateList(firstCat);
 
         String mergedName = backups[backups.length - 1] + "-" + backups[0];
         System.out.println("Copying files to merged backup: " + mergedName);

@@ -4,6 +4,8 @@ exclude-file:C:\Users\user\AppData\Roaming\cache*.dat
 
 include-file:D:\Projects
 exclude-file:D:\Projects\*\compiler_output
+; *** atomic include means whole folder will be included if any file inside it changes
+include-atomic:D:\Projects\smallproject
 
 include-file:D:\Work\AnotherImportantFile.xls
 

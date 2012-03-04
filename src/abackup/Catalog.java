@@ -15,28 +15,62 @@ import java.text.*;
 public class Catalog {
 
     private Map<String, FileItem> files = new LinkedHashMap<String, FileItem>();
+    private Map<String, Set<String>> groups = new LinkedHashMap<String, Set<String>>();
     private boolean useCRC32;
 
     private static DateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMdd-HHmmss");
 
     public Catalog(Config config) {
         System.out.println("Building list of included files...");
-        FileCollector collector = new FileCollector(config.getIncludedFiles());
-        collector.retainAll(config.getIncludedNames());
-        collector.removeAll(config.getExcludedNames());
-        Set<String> included = collector.collectedNames();
+        FileCollector includeCollector = new FileCollector();
+        for (String pattern : config.getIncludedFiles()) {
+            System.out.print(pattern);
+            includeCollector.collect(pattern, false);
+            System.out.println();
+        }
+        for (String pattern : config.getAtomicIncludes()) {
+            System.out.print(pattern);
+            includeCollector.collect(pattern, true);
+            System.out.println();
+        }
+        includeCollector.retainAll(config.getIncludedNames());
+        includeCollector.removeAll(config.getExcludedNames());
+        Map<String, Set<String>> included = includeCollector.collectedNames();
+
         System.out.println("Building list of excluded files...");
-        Set<String> excluded = new FileCollector(config.getExcludedFiles()).collectedNames();
-        included.removeAll(excluded);
+        FileCollector excludeCollector = new FileCollector();
+        for (String pattern : config.getExcludedFiles()) {
+            System.out.print(pattern);
+            excludeCollector.collect(pattern, false);
+            System.out.println();
+        }
+        Map<String, Set<String>> excluded = excludeCollector.collectedNames();
+
+        included.keySet().removeAll(excluded.keySet());
         useCRC32 = config.useCRC32();
         System.out.println("Getting file information...");
-        for (String s : included) {
+        for (Map.Entry<String, Set<String>> entry : included.entrySet()) {
             FileItem fi = new FileItem();
-            fi.name = s;
-            File file = new File(s);
+            fi.name = entry.getKey();
+            File file = new File(entry.getKey());
             fi.size = file.length();
             fi.time = DATE_FORMAT.format(new Date(file.lastModified()));
+            if (entry.getValue() != null) {
+                addToGroups(fi, entry.getValue());
+            }
             files.put(fi.name, fi);
+        }
+    }
+
+    private void addToGroups(FileItem fi, Set<String> fileGroups) {
+        fi.groups = fileGroups.toArray(new String[fileGroups.size()]);
+        for (String group : fi.groups) {
+            Set<String> filesInGroup = this.groups.get(group);
+            if (filesInGroup == null) {
+                filesInGroup = new LinkedHashSet<String>();
+                this.groups.put(group, filesInGroup);
+            }
+            filesInGroup.add(fi.name);
         }
     }
 
@@ -68,12 +102,12 @@ public class Catalog {
         p.flush();
     }
 
-    public List<String> getUpdateList(Catalog previous) {
+    public Collection<String> getUpdateList(Catalog previous) {
         if (previous == null) {
             return new LinkedList<String>(files.keySet());
         } else {
             System.out.print("Checking for updated files");
-            List<String> forUpdate = new LinkedList<String>();
+            Set<String> forUpdate = new LinkedHashSet<String>();
             int cnt = 0;
             for (FileItem cfile : files.values()) {
                 FileItem pfile = previous.files.get(cfile.name);
@@ -82,6 +116,12 @@ public class Catalog {
                         || (useCRC32 ? pfile.crc32 != crc32(cfile)
                                      : !cfile.time.equals(pfile.time))) {
                     forUpdate.add(cfile.name);
+                    if (cfile.groups != null) {
+                        for (String group : cfile.groups) {
+                            Set<String> atomicSet = this.groups.get(group);
+                            forUpdate.addAll(atomicSet);
+                        }
+                    }
                 } else if (!useCRC32) {
                     cfile.crc32 = pfile.crc32; // crc32 will not be calculated, so just copy it from the previos state
                 }
@@ -125,6 +165,7 @@ public class Catalog {
         long size;
         String time;
         long crc32 = -1;
+        String[] groups;
 
         @Override
         public String toString() {

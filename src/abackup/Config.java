@@ -13,6 +13,7 @@ import java.util.*;
 public class Config {
 
     private List<String> includedFiles = new LinkedList<String>();
+    private List<String> atomicIncludes = new LinkedList<String>();
     private List<String> excludedFiles = new LinkedList<String>();
     private List<String> includedNames = new LinkedList<String>();
     private List<String> excludedNames = new LinkedList<String>();
@@ -24,6 +25,7 @@ public class Config {
     private boolean useCRC32 = false;
 
     private static final String INCLUDE_FILE = "include-file:";
+    private static final String INCLUDE_ATOMIC = "include-atomic:";
     private static final String EXCLUDE_FILE = "exclude-file:";
     private static final String INCLUDE_NAMES = "include-names:";
     private static final String EXCLUDE_NAMES = "exclude-names:";
@@ -43,6 +45,8 @@ public class Config {
             }
             if (line.startsWith(INCLUDE_FILE)) {
                 includedFiles.add(line.substring(INCLUDE_FILE.length()).trim());
+            } else if (line.startsWith(INCLUDE_ATOMIC)) {
+                atomicIncludes.add(line.substring(INCLUDE_ATOMIC.length()).trim());
             } else if (line.startsWith(EXCLUDE_FILE)) {
                 excludedFiles.add(line.substring(EXCLUDE_FILE.length()).trim());
             } else if (line.startsWith(INCLUDE_NAMES)) {
@@ -70,6 +74,10 @@ public class Config {
 
     public List<String> getIncludedFiles() {
         return Collections.unmodifiableList(includedFiles);
+    }
+
+    public List<String> getAtomicIncludes() {
+        return Collections.unmodifiableList(atomicIncludes);
     }
 
     public List<String> getExcludedFiles() {

@@ -12,13 +12,30 @@ import java.io.File;
 import java.io.FilenameFilter;
 
 public class FileCollector {
-    private Set<String> included;
+    private Map<String, Set<String>> included;
 
-    public FileCollector(List<String> patterns) {
-        included = expandFiles(patterns);
+    public FileCollector() {
+        included = new LinkedHashMap<String, Set<String>>();
+    }
+    
+    public void collect(String pattern, boolean isAtomic) {
+        for (Map.Entry<String, String> entry : expandFiles(pattern, isAtomic).entrySet()) {
+            if (entry.getValue() != null) {
+                Set<String> groups = included.get(entry.getKey());
+                if (groups == null) {
+                    groups = new LinkedHashSet<String>();
+                    included.put(entry.getKey(), groups);
+                }
+                groups.add(entry.getValue());
+            } else {
+                if (!included.containsKey(entry.getKey())) {
+                    included.put(entry.getKey(), null);
+                }
+            }
+        }
     }
 
-    public Set<String> collectedNames() {
+    public Map<String, Set<String>> collectedNames() {
         return included;
     }
 
@@ -29,7 +46,7 @@ public class FileCollector {
                 excludeFilters.add(new WildcharFilenameFilter(excludePattern));
             }
         }
-        Iterator<String> it = included.iterator();
+        Iterator<String> it = included.keySet().iterator();
         while (it.hasNext()) {
             String s = it.next();
             for (WildcharFilenameFilter excludeFilter : excludeFilters) {
@@ -48,7 +65,7 @@ public class FileCollector {
                 includeFilters.add(new WildcharFilenameFilter(includePattern));
             }
         }
-        Iterator<String> it = included.iterator();
+        Iterator<String> it = included.keySet().iterator();
         while (it.hasNext()) {
             String s = it.next();
             boolean isAccepted = true;
@@ -64,24 +81,20 @@ public class FileCollector {
         }
     }
 
-    private Set<String> expandFiles(List<String> patterns) {
-        Set<String> expanded = new LinkedHashSet<String>();
-        for (String pattern : patterns) {
-            System.out.print(pattern);
-            expandFiles(pattern, expanded);
-            System.out.println();
+    private Map<String, String> expandFiles(String pattern, boolean isAtomic) {
+        Map<String, String> expanded = new LinkedHashMap<String, String>();
+        List<String> patterns = expandPatterns(pattern);
+        for (String patt : patterns) {
+            Set<String> files = new LinkedHashSet<String>();
+            expandFile(new File(patt), files);
+            for (String file : files) {
+                expanded.put(file, isAtomic ? patt : null);
+            }
         }
         return expanded;
     }
 
-    private void expandFiles(String pattern, Set<String> expanded) {
-        List<String> patterns = expandPatterns(pattern);
-        for (String patt : patterns) {
-            expandFile(new File(patt), expanded);
-        }
-    }
-
-    private List<String> expandPatterns(String pattern) {
+    public static List<String> expandPatterns(String pattern) {
         File file = new File(pattern);
         File parent = file.getParentFile();
         if (parent == null) {
@@ -94,8 +107,10 @@ public class FileCollector {
                 for (String expandedParentPath : parents) {
                     FilenameFilter filter = new WildcharFilenameFilter(name);
                     File expandedParent = new File(expandedParentPath);
-                    for (String s : expandedParent.list(filter)) {
-                        result.add(new File(expandedParent, s).getAbsolutePath());
+                    if (expandedParent.isDirectory()) {
+                        for (String s : expandedParent.list(filter)) {
+                            result.add(new File(expandedParent, s).getAbsolutePath());
+                        }
                     }
                 }
             } else {
@@ -108,14 +123,14 @@ public class FileCollector {
     }
 
     private void expandFile(File file, Set<String> expanded) {
-        if (!file.isDirectory()) {
+        if (file.isDirectory()) {
+            for (String s : file.list()) {
+                expandFile(new File(file, s), expanded);
+            }
+        } else if (file.exists()) {
             expanded.add(file.getAbsolutePath());
             if (expanded.size() % 100 == 0) {
                 System.out.print(".");
-            }
-        } else {
-            for (String s : file.list()) {
-                expandFile(new File(file, s), expanded);
             }
         }
     }
