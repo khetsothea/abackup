@@ -1,7 +1,3 @@
-/*
- * Cognity
- * Copyright (c) 2011 FinAnalytica
- */
 package abackup;
 
 import java.io.*;

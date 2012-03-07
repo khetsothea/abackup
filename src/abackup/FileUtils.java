@@ -1,10 +1,3 @@
-/*
- * Cognity
- * Copyright (c) 2008 FinAnalytica, Inc.
- * All Rights Reserved.
- *
- * 2009-8-14 - alex - created
- */
 package abackup;
 
 import java.nio.channels.FileChannel;

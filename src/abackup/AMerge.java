@@ -1,10 +1,3 @@
-/*
- * Cognity
- * Copyright (c) 2008 FinAnalytica, Inc.
- * All Rights Reserved.
- *
- * 2009-5-16 - Alex - created
- */
 package abackup;
 
 import java.io.*;
